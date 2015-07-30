@@ -1,13 +1,13 @@
 package io.bloc.android.blocly.ui.activity;
 
-import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import io.bloc.android.blocly.R;
 
-public class BloclyActivity extends ActionBarActivity {
+public class BloclyActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
