@@ -4,7 +4,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
+import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.R;
 
 public class BloclyActivity extends AppCompatActivity {
@@ -13,7 +15,12 @@ public class BloclyActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocly);
+        Toast.makeText(this,
+                BloclyApplication.getSharedDataSource().getFeeds().get(0).getTitle(),
+                Toast.LENGTH_LONG).show();
     }
+
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
