@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
     <io.bloc.android.blocly.ui.widget.RobotoTextView
         style="@style/Headline"
         android:id="@+id/tv_rss_item_title"
