@@ -115,3 +115,5 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         //adding a new method in ItemAdapterViewHolder called onClick(View view)
     }
 }
+
+//adding this comment to commit
