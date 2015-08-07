@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/btn_check_unchecked_pressed" android:state_checked="false" android:state_pressed="true"/>
+    <item android:drawable="@drawable/btn_check_checked" android:state_checked="true" android:state_pressed="false"/>
+    <item android:drawable="@drawable/btn_check_checked_pressed" android:state_checked="true" android:state_pressed="true"/>
+    <item android:drawable="@drawable/btn_check_unchecked"/>
+</selector>
+
+<!--Defining several states for our CheckBox. The CheckBox searches within these states for the appropriate drawable to use.
+CheckBox searches from the top to the bottom and stops as soon as it finds a match to the current state. -->
