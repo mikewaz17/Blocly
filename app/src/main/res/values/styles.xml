@@ -18,6 +18,16 @@
         <item name="robotoFont">Regular</item>
     </style>
 
+    <style name="Button">
+        // #2
+        <item name="android:textColor">@drawable/btn_text_drawable</item>
+        // #3
+        <item name="android:textSize">14sp</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="robotoFont">Medium</item>
+    </style>
+    <!--The Button style is using the btn_text_drawable for it's color. Also set the right size, font and caps attr -->
+
     <style name="Body1">
         <item name="android:textColor">@color/text_secondary</item>
         <item name="android:textSize">14sp</item>
