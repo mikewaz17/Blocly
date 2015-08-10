@@ -2,6 +2,12 @@
 
     <style name="AppTheme" parent="Theme.AppCompat.Light">
         <item name="android:windowBackground">@color/windowBackground</item>
+
+        <!-- Main theme colors -->
+        <!-- App's branding colors for action bar and others -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary_dark</item>
+        <item name="colorAccent">@color/accent</item>
     </style>
     <style name="Headline">
         <item name="android:textColor">@color/text_primary</item>

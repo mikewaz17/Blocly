@@ -28,6 +28,7 @@ import io.bloc.android.blocly.api.model.RssItem;
 public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterViewHolder> {
 
     private static String TAG = ItemAdapter.class.getSimpleName();
+
     @Override
     public ItemAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int index) {
         View inflate = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.rss_item, viewGroup, false);
@@ -46,7 +47,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
     }
 
     class ItemAdapterViewHolder extends RecyclerView.ViewHolder implements ImageLoadingListener, View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+        boolean contentExpanded;
+
         //ItemAdapterViewHolder is now implementing OnClickListener
+        //A boolean added to keep track of expansion
 
         TextView title;
         TextView feed;
@@ -55,8 +59,12 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         ImageView headerImage;
         CheckBox archiveCheckbox;
         CheckBox favoriteCheckbox;
+        View expandedContentWrapper;
+        TextView expandedContent;
+        TextView visitSite;
         RssItem rssItem;
         //RssItem added in order to be referenced later.
+        //new hidden views
 
         public ItemAdapterViewHolder(View itemView) {
             super(itemView);
@@ -67,12 +75,17 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             headerImage = (ImageView) headerWrapper.findViewById(R.id.iv_rss_item_image);
             archiveCheckbox = (CheckBox) itemView.findViewById(R.id.cb_rss_item_check_mark);
             favoriteCheckbox = (CheckBox) itemView.findViewById(R.id.cb_rss_item_favorite_star);
-            itemView.setOnClickListener(this);
-            archiveCheckbox.setOnCheckedChangeListener(this);
-            favoriteCheckbox.setOnCheckedChangeListener(this);
-            //Assigning the ItemAdapterViewHolder to the ItemView onClickListener
+//            expandedContentWrapper = itemView.findViewById(R.id.ll_rss_item_expanded_content_wrapper);
+//            expandedContent = (TextView) expandedContentWrapper.findViewById(R.id.tv_rss_item_content_full);
+//            visitSite = (TextView) expandedContentWrapper.findViewById(R.id.tv_rss_item_visit_site);
 
+            itemView.setOnClickListener(this);
+//            visitSite.setOnClickListener(this);
+//            archiveCheckbox.setOnCheckedChangeListener(this);
+//            favoriteCheckbox.setOnCheckedChangeListener(this);
+            //Assigning the ItemAdapterViewHolder to the ItemView onClickListener
             //Setting the ItemAdapterViewHolder to the OnCheckedChangeListener for both check boxes
+            //Setting visitSite's OnClickListener while finding the hidden views.
         }
 
         void update(RssFeed rssFeed, RssItem rssItem) {
@@ -80,6 +93,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             feed.setText(rssFeed.getTitle());
             title.setText(rssItem.getTitle());
             content.setText(rssItem.getDescription());
+//            expandedContent.setText(rssItem.getDescription());
+            //content and expandedContent have the same text which is the rssItem's description
             if (rssItem.getImageUrl() != null) {
                 headerWrapper.setVisibility(View.VISIBLE);
                 headerImage.setVisibility(View.INVISIBLE);
@@ -115,12 +130,20 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         public void onLoadingCancelled(String imageUri, View view) {
             ImageLoader.getInstance().loadImage(imageUri, this);
         }
+
         /*
          * OnClickListener
          */
         @Override
         public void onClick(View view) {
-            Toast.makeText(view.getContext(), rssItem.getTitle(), Toast.LENGTH_SHORT).show();
+            if (view == itemView) {
+                contentExpanded = !contentExpanded;
+                expandedContentWrapper.setVisibility(contentExpanded ? View.VISIBLE : View.GONE);
+                content.setVisibility(contentExpanded ? View.GONE : View.VISIBLE);
+            } else {
+                Toast.makeText(view.getContext(), "Visit " + rssItem.getUrl(), Toast.LENGTH_SHORT).show();
+            }
+            //onClick(View) is responsible for clicks on itemView and visitSite.
         }
 
         /*
@@ -133,6 +156,6 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         }
     }
 }
-    //allowing multiple check boxes to be selected at the same time
+//allowing multiple check boxes to be selected at the same time
 
-    //adding this comment to commit
+//adding this comment to commit
