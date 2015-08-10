@@ -81,8 +81,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
 
             itemView.setOnClickListener(this);
 //            visitSite.setOnClickListener(this);
-//            archiveCheckbox.setOnCheckedChangeListener(this);
-//            favoriteCheckbox.setOnCheckedChangeListener(this);
+            archiveCheckbox.setOnCheckedChangeListener(this);
+            favoriteCheckbox.setOnCheckedChangeListener(this);
             //Assigning the ItemAdapterViewHolder to the ItemView onClickListener
             //Setting the ItemAdapterViewHolder to the OnCheckedChangeListener for both check boxes
             //Setting visitSite's OnClickListener while finding the hidden views.
