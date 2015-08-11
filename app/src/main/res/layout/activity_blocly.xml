@@ -34,3 +34,8 @@
         android:textSize="32sp" />
 
 </android.support.v4.widget.DrawerLayout>
+
+<!--#43 DrawerLayout contains every child on screen to work properly. The TextView in LinearLayout
+has the width set which will determine the drawer's width. DrawerLayout determines which child
+is the sliding drawer by searching the View with layout_gravity and it set to the left side.
+The Toolbar's min. height and background color so that it looks like the ActionBar previously.-->

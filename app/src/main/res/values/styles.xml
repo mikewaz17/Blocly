@@ -5,9 +5,18 @@
 
         <!-- Main theme colors -->
         <!-- App's branding colors for action bar and others -->
+        <!-- DrawerArrowStyle -->
+        <item name="drawerArrowStyle">@style/DrawerArrow</item>
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorAccent">@color/accent</item>
+    </style>
+    <!-- #43 set our parent theme to Theme.AppCompat.NoActionBar so the theme will be set no matter which
+    version of Android is used. colorPrimary, colorPrimaryDark and colorAccent are the same as the version
+    with android: in front of them. -->
+
+    <style name="DrawerArrow" parent="Base.Widget.AppCompat.DrawerArrowToggle">
+        <item name="color">@color/actionBarItems</item>
     </style>
     <style name="Headline">
         <item name="android:textColor">@color/text_primary</item>
@@ -25,9 +34,7 @@
     </style>
 
     <style name="Button">
-        // #2
         <item name="android:textColor">@drawable/btn_text_drawable</item>
-        // #3
         <item name="android:textSize">14sp</item>
         <item name="android:textAllCaps">true</item>
         <item name="robotoFont">Medium</item>
