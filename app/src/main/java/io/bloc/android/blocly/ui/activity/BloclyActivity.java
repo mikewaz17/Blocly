@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -19,6 +20,8 @@ public class BloclyActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_blocly);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.tb_activity_blocly);
+        setSupportActionBar(toolbar);
         itemAdapter = new ItemAdapter();
 
         RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rv_activity_blocly);
