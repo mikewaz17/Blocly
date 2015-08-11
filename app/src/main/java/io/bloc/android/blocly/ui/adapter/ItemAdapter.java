@@ -1,11 +1,13 @@
 package io.bloc.android.blocly.ui.adapter;
 
+import android.animation.ValueAnimator;
 import android.graphics.Bitmap;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateDecelerateInterpolator;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
@@ -94,7 +96,6 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             feed.setText(rssFeed.getTitle());
             title.setText(rssItem.getTitle());
             content.setText(rssItem.getDescription());
-
             expandedContent.setText(rssItem.getDescription());
 
             //content and expandedContent have the same text which is the rssItem's description
@@ -140,9 +141,7 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         @Override
         public void onClick(View view) {
             if (view == itemView) {
-                contentExpanded = !contentExpanded;
-                expandedContentWrapper.setVisibility(contentExpanded ? View.VISIBLE : View.GONE);
-                content.setVisibility(contentExpanded ? View.GONE : View.VISIBLE);
+                animateContent(!contentExpanded);
             } else {
                 Toast.makeText(view.getContext(), "Visit " + rssItem.getUrl(), Toast.LENGTH_SHORT).show();
             }
@@ -157,8 +156,72 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
             Log.v(TAG, "Checked changed to: " + isChecked);
         }
+         /*
+          * Private Methods
+          */
+
+        private void animateContent(final boolean expand) {
+            if ((expand && contentExpanded) || (!expand && !contentExpanded)) {
+                return;
+            }
+            int startingHeight = expandedContentWrapper.getMeasuredHeight();
+            int finalHeight = content.getMeasuredHeight();
+            if (expand) {
+                startingHeight = finalHeight;
+                expandedContentWrapper.setAlpha(0f);
+                expandedContentWrapper.setVisibility(View.VISIBLE);
+                expandedContentWrapper.measure(
+                        View.MeasureSpec.makeMeasureSpec(content.getWidth(), View.MeasureSpec.EXACTLY),
+                        ViewGroup.LayoutParams.WRAP_CONTENT
+                );
+                finalHeight = expandedContentWrapper.getMeasuredHeight();
+            } else {
+                content.setVisibility(View.VISIBLE);
+            }
+            startAnimator(startingHeight, finalHeight, new ValueAnimator.AnimatorUpdateListener() {
+                @Override
+                public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                    float animatedFraction = valueAnimator.getAnimatedFraction();
+                    float wrapperAlpha = expand ? animatedFraction : 1f - animatedFraction;
+                    float contentAlpha = 1f - wrapperAlpha;
+
+                    expandedContentWrapper.setAlpha(wrapperAlpha);
+                    content.setAlpha(contentAlpha);
+                    expandedContentWrapper.getLayoutParams().height = animatedFraction == 1f ?
+                            ViewGroup.LayoutParams.WRAP_CONTENT :
+                            (Integer) valueAnimator.getAnimatedValue();
+                    expandedContentWrapper.requestLayout();
+                    if (animatedFraction == 1f) {
+                        if (expand) {
+                            content.setVisibility(View.GONE);
+                        } else {
+                            expandedContentWrapper.setVisibility(View.GONE);
+                        }
+                    }
+                }
+            });
+            contentExpanded = expand;
+        }
+        private void startAnimator(int start, int end, ValueAnimator.AnimatorUpdateListener animatorUpdateListener) {
+            ValueAnimator valueAnimator = ValueAnimator.ofInt(start, end);
+            valueAnimator.addUpdateListener(animatorUpdateListener);
+            valueAnimator.setDuration(itemView.getResources().getInteger(android.R.integer.config_mediumAnimTime));
+            valueAnimator.setInterpolator(new AccelerateDecelerateInterpolator());
+            valueAnimator.start();
+        }
     }
 }
 //allowing multiple check boxes to be selected at the same time
-
 //adding this comment to commit
+/* #42 Added the animateContent boolean to either contract or expand the hidden content. created initial and final height
+ * variables to animate. Made the full length content visible and intend to animate from full transparency to full opacity.
+ * In order to figure out the target height of expansion, the View's method was invoked 'measure(int, int). This method
+ * asks a View to measure itself give the provided constraints. The width of 'content' is constrained but the height is
+ * unlimited. getMeasureHeight() provides the height that expandedContent Wrapper wants to be. AnimatorUpdateListener gets the
+ * updates during an animation and its progress is set as a float value. The height of expandedContentWrapper is set from startingHeight
+ * to finalHeight while the integer value is recovered by using getAnimatedValue(). Set the height of expandedContentWrapper in the
+ * LayoutParams. calling on the requestLayout() method to ask the View to redraw itself on the screen.
+ * Set the duration of the animation with setDuration and config_medAnimTime. The AccelerateDecelerateInterpolator accelerates to a
+ * constant speed then decelerates to stop at the end.
+ */
+
