@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:state_selected="true" android:color="@color/primary"/>
+    <item android:color="@color/text_primary"/>
+    <!--the selected state is set for any View by using the setSelected method and set the primary color
+    as the selected state. -->
+
+</selector>
