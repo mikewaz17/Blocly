@@ -25,6 +25,7 @@
     </LinearLayout>
 
     <TextView
+        android:id="@+id/rv_nav_activity_blocly"
         android:layout_width="280dp"
         android:layout_height="match_parent"
         android:layout_gravity="left"

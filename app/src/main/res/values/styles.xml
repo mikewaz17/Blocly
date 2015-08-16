@@ -18,12 +18,13 @@
     <style name="DrawerArrow" parent="Base.Widget.AppCompat.DrawerArrowToggle">
         <item name="color">@color/actionBarItems</item>
     </style>
-    <style name="NavigationItem"/>
+    <style name="NavigationItem">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@drawable/navigation_item_text</item>
         <item name="android:singleLine">true</item>
         <item name="android:gravity">center_vertical</item>
         <item name="robotoFont">Medium</item>
+    </style>
     <!--#44 Set the gravity to match the center of the text with TextView. The text will be alligned
      with the center of the TextView-->
     <style name="Headline">
