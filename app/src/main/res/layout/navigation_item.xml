@@ -13,7 +13,7 @@
 
     <io.bloc.android.blocly.ui.widget.RobotoTextView
         style="@style/NavigationItem"
-        android:="@+id/tv_nav_item_title"
+        android:id="@+id/tv_nav_item_title"
         android:layout_width="match_parent"
         android:layout_height="@dimen/navigation_item_title_height"
         android:layout_marginLeft="@dimen/navigation_item_horizontal_padding"

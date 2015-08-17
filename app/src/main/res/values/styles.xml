@@ -18,6 +18,7 @@
     <style name="DrawerArrow" parent="Base.Widget.AppCompat.DrawerArrowToggle">
         <item name="color">@color/actionBarItems</item>
     </style>
+
     <style name="NavigationItem">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@drawable/navigation_item_text</item>
@@ -55,6 +56,7 @@
         <item name="android:textSize">14sp</item>
         <item name="robotoFont">Regular</item>
     </style>
+
     <style name="CodeFont" parent="@android:style/TextAppearance.Medium" >
 
         <item name="android:layout_width">match_parent</item>
