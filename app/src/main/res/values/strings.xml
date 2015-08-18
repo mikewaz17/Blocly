@@ -8,4 +8,8 @@
     <string name="navigation_option_inbox">Inbox</string>
     <string name="navigation_option_favorites">Favorites</string>
     <string name="navigation_option_archived">Archived</string>
+    <string name="menu_share">\@string/menu_share</string>
+    <string name="menu_search">\@string/menu_search</string>
+    <string name="menu_refresh">\@string/menu_refresh</string>
+    <string name="menu_mark_as_read">\@string/menu_mark_as_read</string>
 </resources>

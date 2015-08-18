@@ -79,7 +79,13 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
         if (id == R.id.action_settings) {
             return true;
         }
+        Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
         return super.onOptionsItemSelected(item);
+    }
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.blocly, menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
     /*
