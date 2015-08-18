@@ -9,8 +9,10 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import io.bloc.android.blocly.R;
@@ -39,7 +41,22 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
         recyclerView.setAdapter(itemAdapter);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         drawerLayout = (DrawerLayout) findViewById(R.id.dl_activity_blocly);
-        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, 0, 0);
+        drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, 0, 0) {
+            @Override
+            public void onDrawerClosed(View drawerView) {
+                super.onDrawerClosed(drawerView);
+                invalidateOptionsMenu();
+            }
+
+            @Override
+            public void onDrawerOpened(View drawerView) {
+                super.onDrawerOpened(drawerView);
+                invalidateOptionsMenu();
+            }
+        };
+        /*#46 If the drawer is opened then we don't use our XML menu, otherwise it's used as it
+         *normally would. This class overrides the ActionBarDrawerToggle's default settings
+         */
         drawerLayout.setDrawerListener(drawerToggle);
         navigationDrawerAdapter = new NavigationDrawerAdapter();
         navigationDrawerAdapter.setDelegate(this);
@@ -65,8 +82,11 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
+        if (drawerLayout.isDrawerOpen(Gravity.LEFT)) {
+            return super.onCreateOptionsMenu(menu);
+        }
         getMenuInflater().inflate(R.menu.menu_blocly, menu);
-        return true;
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -79,18 +99,16 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
         if (id == R.id.action_settings) {
             return true;
         }
+        if (drawerToggle.onOptionsItemSelected(item)) {
+            return true;
+        }
         Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
         return super.onOptionsItemSelected(item);
     }
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.blocly, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
 
     /*
-      * NavigationDrawerAdapterDelegate
-      */
+     * NavigationDrawerAdapterDelegate
+     */
 
     @Override
     public void didSelectNavigationOption(NavigationDrawerAdapter adapter, NavigationDrawerAdapter.NavigationOption navigationOption) {
