@@ -29,6 +29,7 @@ public class BloclyActivity extends AppCompatActivity
         NavigationDrawerAdapter.NavigationDrawerAdapterDelegate,
         ItemAdapter.DataSource,
         ItemAdapter.Delegate {
+    private RecyclerView recyclerView;
     //#47 BloclyActivity implements Delegate and DataSource for ItemAdapter
     private ItemAdapter itemAdapter;
     private ActionBarDrawerToggle drawerToggle;
@@ -48,7 +49,8 @@ public class BloclyActivity extends AppCompatActivity
         itemAdapter = new ItemAdapter();
         itemAdapter.setDataSource(this);
         itemAdapter.setDelegate(this);
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.rv_activity_blocly);
+        recyclerView = (RecyclerView) findViewById(R.id.rv_activity_blocly);
+        //#48 set the RecyclerView to our member variable
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(itemAdapter);
@@ -216,10 +218,14 @@ public class BloclyActivity extends AppCompatActivity
     public void onItemClicked(ItemAdapter itemAdapter, RssItem rssItem) {
         int positionToExpand = -1;
         int positionToContract = -1;
-
         if (itemAdapter.getExpandedItem() != null) {
             positionToContract = BloclyApplication.getSharedDataSource().getItems().indexOf(itemAdapter.getExpandedItem());
+            View viewToContract = recyclerView.getLayoutManager().findViewByPosition(positionToContract);
+            if (viewToContract == null) {
+                positionToContract = -1;
+            }
         }
+        //#48 finding the View that is contracting
 
         if (itemAdapter.getExpandedItem() != rssItem) {
             positionToExpand = BloclyApplication.getSharedDataSource().getItems().indexOf(rssItem);
@@ -232,9 +238,24 @@ public class BloclyActivity extends AppCompatActivity
         }
         if (positionToExpand > -1) {
             itemAdapter.notifyItemChanged(positionToExpand);
+        } else {
+            return;
         }
-
+        int lessToScroll = 0;
+        if (positionToContract > -1 && positionToContract < positionToExpand) {
+            lessToScroll = itemAdapter.getExpandedItemHeight() - itemAdapter.getCollapsedItemHeight();
+        }
+        View viewToExpand = recyclerView.getLayoutManager().findViewByPosition(positionToExpand);
+        recyclerView.smoothScrollBy(0, viewToExpand.getTop() - lessToScroll);
     }
     //#45 when the user clicks on the RssItem or the NavigationOption the corresponding text will appear.
 }
-//#47 This helps determine which items the ItemAdapter displays from the users selection.
+    // #47 This helps determine which items the ItemAdapter displays from the users selection.
+    /* #48 Avoid scrolling the RecyclerView when there's no View to expand from. We find the position
+     * of the LayoutManager by invoking findViewByPosition(int). If finds the View and returns it if it's
+     * on the screen, if not it's null. Setting the recyclerView to scroll smoothly, returning the distance
+     * from the top of the View to top of it's parent
+     */
+    /* #48 figuring out how much less scrolling is necessary in the RecyclerView if the contracting View is above the new
+     * expanded item View
+     */

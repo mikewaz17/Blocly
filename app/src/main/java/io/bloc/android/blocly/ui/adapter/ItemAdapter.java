@@ -40,9 +40,12 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
     private RssItem expandedItem = null;
     private WeakReference<Delegate> delegate;
     private WeakReference<DataSource> dataSource;
+    private int collapsedItemHeight;
+    private int expandedItemHeight;
     /*#47 DataSource gives the ItemAdapter info. The ItemAdapter seperates from DataSource and allows
      * any controller to use ItemAdapter
      */
+    //#48 added two fields to track height within ItemAdapter
 
     @Override
     public ItemAdapterViewHolder onCreateViewHolder(ViewGroup viewGroup, int index) {
@@ -102,6 +105,22 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
         this.expandedItem = expandedItem;
     }
     //#47 the expandedItem represents the RssItem
+    public int getCollapsedItemHeight() {
+        return collapsedItemHeight;
+    }
+
+    private void setCollapsedItemHeight(int collapsedItemHeight) {
+        this.collapsedItemHeight = collapsedItemHeight;
+    }
+
+    public int getExpandedItemHeight() {
+        return expandedItemHeight;
+    }
+
+    private void setExpandedItemHeight(int expandedItemHeight) {
+        this.expandedItemHeight = expandedItemHeight;
+    }
+    //#48 added private setters, public getters for CollapsedItemHeight and ExpandedItemHeight
 
     class ItemAdapterViewHolder extends RecyclerView.ViewHolder implements ImageLoadingListener, View.OnClickListener, CompoundButton.OnCheckedChangeListener {
         boolean contentExpanded;
@@ -227,6 +246,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
             int startingHeight = expandedContentWrapper.getMeasuredHeight();
             int finalHeight = content.getMeasuredHeight();
             if (expand) {
+                setCollapsedItemHeight(itemView.getHeight());
+                //#48 getting the item height if it starts to expand
                 startingHeight = finalHeight;
                 expandedContentWrapper.setAlpha(0f);
                 expandedContentWrapper.setVisibility(View.VISIBLE);
@@ -254,6 +275,8 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                     if (animatedFraction == 1f) {
                         if (expand) {
                             content.setVisibility(View.GONE);
+                            setExpandedItemHeight(itemView.getHeight());
+                            //#48 setting the expanded height when the animation is finished
                         } else {
                             expandedContentWrapper.setVisibility(View.GONE);
                         }
