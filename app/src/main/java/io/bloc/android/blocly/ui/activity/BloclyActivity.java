@@ -1,6 +1,7 @@
 package io.bloc.android.blocly.ui.activity;
 
 import android.content.res.Configuration;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -9,11 +10,12 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
+
+import java.util.ArrayList;
 
 import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.model.RssFeed;
@@ -26,6 +28,9 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
     private NavigationDrawerAdapter navigationDrawerAdapter;
+    private Menu menu;
+    private View overflowButton;
+    //#46 added a menu object and another for the overflow button.
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,17 +50,73 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
             @Override
             public void onDrawerClosed(View drawerView) {
                 super.onDrawerClosed(drawerView);
-                invalidateOptionsMenu();
+                if (overflowButton != null) {
+                    overflowButton.setAlpha(1f);
+                    overflowButton.setEnabled(true);
+                }
+                if (menu == null) {
+                    return;
+                }
+                for (int i = 0; i < menu.size(); i++) {
+                    MenuItem item = menu.getItem(i);
+                    item.setEnabled(true);
+                    Drawable icon = item.getIcon();
+                    if (icon != null) {
+                        icon.setAlpha(255);
+                    }
+                }
             }
+            /*#46 when the drawer is open the items are dimmed and they go back to normal
+             *once the drawer is closed. The menu can either be enabled or disabled and are clickable
+             *when the drawer is open.
+             */
 
             @Override
             public void onDrawerOpened(View drawerView) {
                 super.onDrawerOpened(drawerView);
-                invalidateOptionsMenu();
+                if (overflowButton != null) {
+                    overflowButton.setEnabled(false);
+                }
+                if (menu == null) {
+                    return;
+                }
+                for (int i = 0; i < menu.size(); i++) {
+                    menu.getItem(i).setEnabled(false);
+                }
+            }
+
+            @Override
+            public void onDrawerSlide(View drawerView, float slideOffset) {
+                super.onDrawerSlide(drawerView, slideOffset);
+                if (overflowButton == null) {
+                    ArrayList<View> foundViews = new ArrayList<View>();
+                    getWindow().getDecorView().findViewsWithText(foundViews,
+                            getString(R.string.abc_action_menu_overflow_description),
+                            View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);
+                    if (foundViews.size() > 0) {
+                        overflowButton = foundViews.get(0);
+                    }
+                }
+                if (overflowButton != null) {
+                    overflowButton.setAlpha(1f - slideOffset);
+                }
+                if (menu == null) {
+                    return;
+                }
+                for (int i = 0; i < menu.size(); i++) {
+                    MenuItem item = menu.getItem(i);
+                    Drawable icon = item.getIcon();
+                    if (icon != null) {
+                        icon.setAlpha((int) ((1f - slideOffset) * 255));
+                    }
+                }
             }
         };
         /*#46 If the drawer is opened then we don't use our XML menu, otherwise it's used as it
          *normally would. This class overrides the ActionBarDrawerToggle's default settings
+         * The menu items are overflow button are enabled when the drawer is opened
+         * The drawer layout ranges from 0f near the edge of the screen to 1f at the max width.
+         * Searches the View and its children Views for matching text.
          */
         drawerLayout.setDrawerListener(drawerToggle);
         navigationDrawerAdapter = new NavigationDrawerAdapter();
@@ -82,12 +143,11 @@ public class BloclyActivity extends AppCompatActivity implements NavigationDrawe
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        if (drawerLayout.isDrawerOpen(Gravity.LEFT)) {
-            return super.onCreateOptionsMenu(menu);
-        }
         getMenuInflater().inflate(R.menu.menu_blocly, menu);
+        this.menu = menu;
         return super.onCreateOptionsMenu(menu);
     }
+    //#46 removed the drawer checker and brought in a the menu object.
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
