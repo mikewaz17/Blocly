@@ -12,7 +12,6 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.FailReason;
@@ -35,7 +34,9 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
     }
     public static interface Delegate {
         public void onItemClicked(ItemAdapter itemAdapter, RssItem rssItem);
+        public void onVisitClicked(ItemAdapter itemAdapter, RssItem rssItem);
     }
+    // #49 delegated the visiting click to a different class
     private static String TAG = ItemAdapter.class.getSimpleName();
     private RssItem expandedItem = null;
     private WeakReference<Delegate> delegate;
@@ -222,7 +223,10 @@ public class ItemAdapter extends RecyclerView.Adapter<ItemAdapter.ItemAdapterVie
                 }
                 //#47 delegating reaction to the clicks
             } else {
-                Toast.makeText(view.getContext(), "Visit " + rssItem.getUrl(), Toast.LENGTH_SHORT).show();
+                if (getDelegate() != null) {
+                    getDelegate().onVisitClicked(ItemAdapter.this, rssItem);
+                }
+                // #49 delegated the response of the clicks to the delegate object
             }
             //onClick(View) is responsible for clicks on itemView and visitSite.
         }
