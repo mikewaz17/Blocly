@@ -49,6 +49,7 @@ public class BloclyActivity extends AppCompatActivity
         setContentView(R.layout.activity_blocly);
         Toolbar toolbar = (Toolbar) findViewById(R.id.tb_activity_blocly);
         setSupportActionBar(toolbar);
+
         //Assigning the ToolBar as our ActionBar
         itemAdapter = new ItemAdapter();
         itemAdapter.setDataSource(this);
@@ -161,7 +162,7 @@ public class BloclyActivity extends AppCompatActivity
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_blocly, menu);
+        getMenuInflater().inflate(R.menu.blocly, menu);
         this.menu = menu;
         animateShareItem(itemAdapter.getExpandedItem() != null);
         return super.onCreateOptionsMenu(menu);
@@ -291,6 +292,7 @@ public class BloclyActivity extends AppCompatActivity
 
     private void animateShareItem(final boolean enabled) {
         MenuItem shareItem = menu.findItem(R.id.action_share);
+
         if (shareItem.isEnabled() == enabled) {
             return;
         }
