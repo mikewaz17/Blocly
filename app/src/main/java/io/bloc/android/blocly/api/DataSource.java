@@ -7,6 +7,7 @@ import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.model.RssFeed;
 import io.bloc.android.blocly.api.model.RssItem;
+import io.bloc.android.blocly.api.network.GetFeedsNetworkRequest;
 
 /**
  * Created by Mike on 8/2/2015.
@@ -20,8 +21,14 @@ public class DataSource {
         feeds = new ArrayList<RssFeed>();
         items = new ArrayList<RssItem>();
         createFakeData();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                new GetFeedsNetworkRequest("http://feeds.feedburner.com/androidcentral?format=xml").performRequest();
+            }
+        }).start();
     }
-
+    //#50 Preventing the interface from being blocked when responding to the network request by placing in the backround.
     public List<RssFeed> getFeeds() {
         return feeds;
     }
