@@ -309,6 +309,10 @@ public class BloclyActivity extends AppCompatActivity
         });
         valueAnimator.start();
     }
+
+
+
+
     //#45 when the user clicks on the RssItem or the NavigationOption the corresponding text will appear.
 }
     // #47 This helps determine which items the ItemAdapter displays from the users selection.
@@ -321,3 +325,5 @@ public class BloclyActivity extends AppCompatActivity
      * expanded item View
      */
     // #49 adding this method in order to animate the menu item
+
+

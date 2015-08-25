@@ -108,4 +108,12 @@ public class DataSource {
                     0, System.currentTimeMillis(), false, false));
         }
     }
+    private void getAllRssItems(){
+        SQLiteDatabase readableDatabase = databaseOpenHelper.getReadableDatabase();
+        String query = "SELECT * FROM rss_items ORDER BY pub_date LIMIT 10";
+        readableDatabase.execSQL(query);
+    }
+
 }
+
+
