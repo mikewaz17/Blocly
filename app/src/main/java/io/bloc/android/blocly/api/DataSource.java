@@ -2,8 +2,12 @@ package io.bloc.android.blocly.api;
 
 import android.database.sqlite.SQLiteDatabase;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.BuildConfig;
@@ -38,16 +42,50 @@ public class DataSource {
         new Thread(new Runnable(){
             @Override
             public void run() {
-                if (BuildConfig.DEBUG && false) {
+                if (BuildConfig.DEBUG && true) {
                     BloclyApplication.getSharedInstance().deleteDatabase("blocly_db");
                 }
                 SQLiteDatabase writableDatabase = databaseOpenHelper.getWritableDatabase();
-                new GetFeedsNetworkRequest("http://feeds.feedburner.com/androidcentral?format=xml").performRequest();
+                List<GetFeedsNetworkRequest.FeedResponse> feedResponses =
+                        new GetFeedsNetworkRequest("http://feeds.feedburner.com/androidcentral?format=xml").performRequest();
+                GetFeedsNetworkRequest.FeedResponse androidCentral = feedResponses.get(0);
+
+                long androidCentralFeedId = new RssFeedTable.Builder()
+                        .setFeedURL(androidCentral.channelFeedURL)
+                        .setSiteURL(androidCentral.channelURL)
+                        .setTitle(androidCentral.channelTitle)
+                        .setDescription(androidCentral.channelDescription)
+                        .insert(writableDatabase);
+                for (GetFeedsNetworkRequest.ItemResponse itemResponse : androidCentral.channelItems) {
+                    // #8
+                    long itemPubDate = System.currentTimeMillis();
+                    DateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy kk:mm:ss z", Locale.ENGLISH);
+                    try {
+                        itemPubDate = dateFormat.parse(itemResponse.itemPubDate).getTime();
+                    } catch (ParseException e) {
+                        e.printStackTrace();
+                    }
+                    new RssItemTable.Builder()
+                            .setTitle(itemResponse.itemTitle)
+                            .setDescription(itemResponse.itemDescription)
+                            .setEnclosure(itemResponse.itemEnclosureURL)
+                            .setMIMEType(itemResponse.itemEnclosureMIMEType)
+                            .setLink(itemResponse.itemURL)
+                            .setGUID(itemResponse.itemGUID)
+                            .setPubDate(itemPubDate)
+                            .setRSSFeed(androidCentralFeedId)
+                            .insert(writableDatabase);
+                }
             }
         }).start();
     }
     //#50 Preventing the interface from being blocked when responding to the network request by placing in the backround.
-    /*#53 Set the DEBUG to false and decide to delete the database or not.  */
+    /*#53 Set the DEBUG to false and decide to delete the database or not.
+     */
+    /*#54 Changed the false to true on 41 to delete the database every time the app is launched. Introduce a new feed
+     * AndroidCentral into the table. Added the date format at 62 day, month year, hour, minute, second and millisecond.
+     * Inserted the RssItemTable at 68 and all of it's data. The row identifier added for the AndroidCentral feed.
+     */
     public List<RssFeed> getFeeds() {
         return feeds;
     }

@@ -6,7 +6,13 @@ import android.database.sqlite.SQLiteDatabase;
  * Created by Mike on 8/21/2015.
  */
 public abstract class Table {
+    public static interface Builder {
 
+        public long insert(SQLiteDatabase writableDB);
+    }
+    /*#54 Created the builder class. Each class using Builder has to be able to insert it's data
+     *into the SQLiteDatabase.
+     */
     protected static final String COLUMN_ID = "id";
 
     public abstract String getName();
