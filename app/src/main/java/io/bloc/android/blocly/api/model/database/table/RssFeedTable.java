@@ -1,6 +1,7 @@
 package io.bloc.android.blocly.api.model.database.table;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 /**
@@ -37,13 +38,29 @@ public class RssFeedTable extends Table {
             return writableDB.insert(NAME, null, values);
         }
     }
+    public static String getSiteURL(Cursor cursor){
+        return  getString(cursor,COLUMN_LINK);
+    }
+
+    public static String getFeedURL(Cursor cursor){
+        return getString(cursor, COLUMN_FEED_URL);
+    }
+
+    public static String getTitle(Cursor cursor){
+        return getString(cursor, COLUMN_TITLE);
+    }
+
+    public static String getDescription(Cursor cursor){
+        return getString(cursor, COLUMN_DESCRIPTION);
+    }
+    //#55 Added in the four methods SiteURL, FeedURL, Title, Description.//
+
 
     private static final String NAME = "rss_feeds";
     /*#54 Added the Builder class to RssFeedTable. ContentValues object is put in to update within a database.
      * Each method in the Builder class returns itself(15-17). Added the columns for FEED_URL, COLUMN_TITLE,
      * COLUMN_DESCRIPTION.
      */
-
     private static final String COLUMN_LINK = "link";
     private static final String COLUMN_TITLE = "title";
     private static final String COLUMN_DESCRIPTION = "description";
