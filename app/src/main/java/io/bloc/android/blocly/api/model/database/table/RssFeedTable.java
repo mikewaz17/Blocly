@@ -82,4 +82,5 @@ public class RssFeedTable extends Table {
                 + COLUMN_FEED_URL + " TEXT)";
     }
     //#52 Added in column types for link, title, description and feed url. The id column is now set as the primary key.
+
 }

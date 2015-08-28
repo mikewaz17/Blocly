@@ -15,7 +15,9 @@ public class RssItem {
     private boolean favorite;
     private boolean archived;
 
-    public RssItem(String guid, String title, String description, String url, String imageUrl, long rssFeedId, long datePublished, boolean favorite, boolean archived) {
+    public RssItem(String guid, String title, String description,
+                   String url, String imageUrl, long rssFeedId,
+                   long datePublished, boolean favorite, boolean archived) {
         this.guid = guid;
         this.title = title;
         this.description = description;
@@ -26,6 +28,8 @@ public class RssItem {
         this.favorite = favorite;
         this.archived = archived;
     }
+
+
 
     public String getGuid() {
         return guid;
