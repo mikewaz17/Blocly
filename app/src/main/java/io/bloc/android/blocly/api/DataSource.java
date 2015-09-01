@@ -1,6 +1,7 @@
 package io.bloc.android.blocly.api;
 
 import android.database.Cursor;
+import android.os.Handler;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -10,7 +11,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
 
 import io.bloc.android.blocly.BloclyApplication;
 import io.bloc.android.blocly.BuildConfig;
@@ -28,11 +28,12 @@ import io.bloc.android.blocly.api.network.NetworkRequest;
  */
 public class DataSource {
 
-    public void fetchItemsForFeed(RssFeed rssFeed, Callback<List<RssItem>> callback) {
-    }
+//    public void fetchItemsForFeed(RssFeed rssFeed, Callback<List<RssItem>> callback) {
+//    }
 
     public static interface Callback<Result> {
         public void onSuccess(Result result);
+
         public void onError(String errorMessage);
     }
 
@@ -41,7 +42,7 @@ public class DataSource {
     private RssItemTable rssItemTable;
     private ExecutorService executorService;
 
- //#53 Opening the database with databaseOpenHelper.
+    //#53 Opening the database with databaseOpenHelper.
     public DataSource() {
         rssFeedTable = new RssFeedTable();
         rssItemTable = new RssItemTable();
@@ -135,62 +136,65 @@ public class DataSource {
                     }
                 });
             }
+        });
+    }
 
-            public void fetchItemsForFeed(final RssFeed rssFeed, final Callback<List<RssItem>> callback) {
-                final Handler callbackThreadHandler = new Handler();
-                submitTask(new Runnable() {
+    public void fetchItemsForFeed(final RssFeed rssFeed, final Callback<List<RssItem>> callback) {
+        final Handler callbackThreadHandler = new Handler();
+        submitTask(new Runnable() {
+            @Override
+            public void run() {
+                final List<RssItem> resultList = new ArrayList<RssItem>();
+                Cursor cursor = RssItemTable.fetchItemsForFeed(
+                        databaseOpenHelper.getReadableDatabase(),
+                        rssFeed.getRowId());
+
+                if (cursor.moveToFirst()) {
+                    do {
+                        resultList.add(itemFromCursor(cursor));
+                    } while (cursor.moveToNext());
+                    cursor.close();
+                }
+                callbackThreadHandler.post(new Runnable() {
                     @Override
                     public void run() {
-                        final List<RssItem> resultList = new ArrayList<RssItem>();
-                        Cursor cursor = RssItemTable.fetchItemsForFeed(
-                                databaseOpenHelper.getReadableDatabase(),
-                                rssFeed.getRowId());
-
-                        if (cursor.moveToFirst()) {
-                            do {
-                                resultList.add(itemFromCursor(cursor));
-                            } while (cursor.moveToNext());
-                            cursor.close();
-                        }
-                        callbackThreadHandler.post(new Runnable() {
-                            @Override
-                            public void run() {
-                                callback.onSuccess(resultList);
-                            }
-                        });
+                        callback.onSuccess(resultList);
                     }
                 });
             }
-            //#50 Preventing the interface from being blocked when responding to the network request by placing in the backround.
+        });
+    }
+    //#50 Preventing the interface from being blocked when responding to the network request by placing in the backround.
     /*#53 Set the DEBUG to false and decide to delete the database or not.
      */
     /*#54 Changed the false to true on 41 to delete the database every time the app is launched. Introduce a new feed
      * AndroidCentral into the table. Added the date format at 62 day, month year, hour, minute, second and millisecond.
      * Inserted the RssItemTable at 68 and all of it's data. The row identifier added for the AndroidCentral feed.
      */
-            //#55 Removed the fake data, DataSource will recover the Rss Feed that was inserted in, converting the rows to models.
+    //#55 Removed the fake data, DataSource will recover the Rss Feed that was inserted in, converting the rows to models.
 
-            static RssFeed feedFromCursor(Cursor cursor) {
-                return new RssFeed(Table.getRowId(cursor), RssFeedTable.getTitle(cursor),
-                        RssFeedTable.getDescription(cursor), RssFeedTable.getSiteURL(cursor),
-                        RssFeedTable.getFeedURL(cursor));
-            }
-
-            static RssItem itemFromCursor(Cursor cursor) {
-                return new RssItem(Table.getRowId(cursor), RssItemTable.getGUID(cursor), RssItemTable.getTitle(cursor),
-                        RssItemTable.getDescription(cursor), RssItemTable.getLink(cursor),
-                        RssItemTable.getEnclosure(cursor), RssItemTable.getRssFeedId(cursor),
-                        RssItemTable.getPubDate(cursor), RssItemTable.getFavorite(cursor),
-                        RssItemTable.getArchived(cursor));
-            }
-
-            //#55 feedFromCursor takes info from the Cursor and puts it into RssFeed, itemFromCursor does the same for RssItem.
-            //#56 Removed the fake data.
-            void submitTask(Runnable task) {
-                if (executorService.isShutdown() || executorService.isTerminated()) {
-                    executorService = Executors.newSingleThreadExecutor();
-                }
-                executorService.submit(task);
-            }
-        }
+    static RssFeed feedFromCursor(Cursor cursor) {
+        return new RssFeed(Table.getRowId(cursor), RssFeedTable.getTitle(cursor),
+                RssFeedTable.getDescription(cursor), RssFeedTable.getSiteURL(cursor),
+                RssFeedTable.getFeedURL(cursor));
     }
+
+    static RssItem itemFromCursor(Cursor cursor) {
+        return new RssItem(Table.getRowId(cursor), RssItemTable.getGUID(cursor), RssItemTable.getTitle(cursor),
+                RssItemTable.getDescription(cursor), RssItemTable.getLink(cursor),
+                RssItemTable.getEnclosure(cursor), RssItemTable.getRssFeedId(cursor),
+                RssItemTable.getPubDate(cursor), RssItemTable.getFavorite(cursor),
+                RssItemTable.getArchived(cursor));
+    }
+
+    //#55 feedFromCursor takes info from the Cursor and puts it into RssFeed, itemFromCursor does the same for RssItem.
+    //#56 Removed the fake data.
+    void submitTask(Runnable task) {
+        if (executorService.isShutdown() || executorService.isTerminated()) {
+            executorService = Executors.newSingleThreadExecutor();
+        }
+        executorService.submit(task);
+    }
+}
+
+
