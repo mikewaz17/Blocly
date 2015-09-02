@@ -1,5 +1,7 @@
 package io.bloc.android.blocly.api.network;
 
+import org.jsoup.Jsoup;
+import org.jsoup.select.Elements;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -27,9 +29,12 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
     private static final String XML_TAG_PUB_DATE = "pubDate";
     private static final String XML_TAG_GUID = "guid";
     private static final String XML_TAG_ENCLOSURE = "enclosure";
+    private static final String XML_TAG_CONTENT_ENCODED = "content:encoded";
+    private static final String XML_TAG_MEDIA_CONTENT = "media:content";
     private static final String XML_ATTRIBUTE_URL = "url";
     private static final String XML_ATTRIBUTE_TYPE = "type";
-    //#51 Added string references for the tags and attributes
+    //#51 Added string references for the tags and attributes.
+    //#57 Added in the media:content and content:encoded tags.
 
     String[] feedUrls;
 
@@ -58,6 +63,10 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                 for (int itemIndex = 0; itemIndex < allItemNodes.getLength(); itemIndex++) {
                     String itemURL = null;
                     String itemTitle = null;
+                    String itemImageURL = null;
+                    String itemContentEncodedText = null;
+                    String itemMediaURL = null;
+                    String itemMediaMIMEType = null;
                     String itemDescription = null;
                     String itemGUID = null;
                     String itemPubDate = null;
@@ -73,7 +82,9 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                         } else if (XML_TAG_TITLE.equalsIgnoreCase(tag)) {
                             itemTitle = tagNode.getTextContent();
                         } else if (XML_TAG_DESCRIPTION.equalsIgnoreCase(tag)) {
-                            itemDescription = tagNode.getTextContent();
+                            String descriptionText = tagNode.getTextContent();
+                            itemImageURL = parseImageFromHTML(descriptionText);
+                            itemDescription = parseTextFromHTML(descriptionText);
                         } else if (XML_TAG_ENCLOSURE.equalsIgnoreCase(tag)) {
                             NamedNodeMap enclosureAttributes = tagNode.getAttributes();
                             itemEnclosureURL = enclosureAttributes.getNamedItem(XML_ATTRIBUTE_URL).getTextContent();
@@ -82,8 +93,35 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
                             itemPubDate = tagNode.getTextContent();
                         } else if (XML_TAG_GUID.equalsIgnoreCase(tag)) {
                             itemGUID = tagNode.getTextContent();
+
+                        } else if (XML_TAG_CONTENT_ENCODED.equalsIgnoreCase(tag)){
+                            String contentEncoded = tagNode.getTextContent();
+                            itemImageURL = parseImageFromHTML(contentEncoded);
+                            itemContentEncodedText = parseTextFromHTML(contentEncoded);
+                        } else if(XML_TAG_MEDIA_CONTENT.equalsIgnoreCase(tag)){
+                            NamedNodeMap mediaAttributes = tagNode.getAttributes();
+                            itemMediaURL = mediaAttributes.getNamedItem(XML_ATTRIBUTE_URL).getTextContent();
+                            itemMediaMIMEType = mediaAttributes.getNamedItem(XML_ATTRIBUTE_TYPE).getTextContent();
                         }
                     }
+
+                    if(itemEnclosureURL == null){
+                        itemEnclosureURL = itemImageURL;
+                    }
+
+                    if (itemEnclosureURL == null){
+                        itemEnclosureURL = itemImageURL;
+                        itemEnclosureMIMEType = itemMediaMIMEType;
+                    }
+
+                    if (itemContentEncodedText != null){
+                        itemDescription = itemContentEncodedText;
+                    }
+                    /*#57itemImageURL will hold the first image if there's one from HTML. parseTextFromHTML is used
+                     *to take out HTML tags and attrs, leaving just the text. Parsed the text and image of content:encoded
+                     *This catches the case where an image was not taken out of description or content. Assigned values within
+                     * the media:content tag. Placed the description with the content encoded text.
+                     */
                     responseItems.add(new ItemResponse(itemURL, itemTitle, itemDescription,
                             itemGUID, itemPubDate, itemEnclosureURL, itemEnclosureMIMEType));
                     /*#51 getElementsByTagName recovers a NodeList for the item tags in the feed. Set up variables
@@ -119,6 +157,22 @@ public class GetFeedsNetworkRequest extends NetworkRequest<List<GetFeedsNetworkR
         }
         return null;
     }
+
+    static String parseTextFromHTML(String htmlString) {
+        org.jsoup.nodes.Document document = Jsoup.parse(htmlString);
+        return document.body().text();
+    }
+    static String parseImageFromHTML(String htmlString) {
+        org.jsoup.nodes.Document document = Jsoup.parse(htmlString);
+        Elements imgElements = document.select("img");
+        if (imgElements.isEmpty()) {
+            return null;
+        }
+        return imgElements.attr("src");
+    }
+    /*#57 Incorporating the jSoup methods. HTML has everything removed but the remaining text.
+     *parseImageFromHTML takes out the image from the HTML, then returns the source of the first image.
+     */
     //#51 Created a method to recover the tags from a Document
     public static class FeedResponse {
         public final String channelFeedURL;
