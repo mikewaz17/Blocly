@@ -144,7 +144,7 @@ public class BloclyActivity extends AppCompatActivity implements
         navigationRecyclerView.setItemAnimator(new DefaultItemAnimator());
         navigationRecyclerView.setAdapter(navigationDrawerAdapter);
 
-        BloclyActivity.getSharedDataSource().
+        BloclyApplication.getSharedDataSource().
                 fetchAllFeeds(new DataSource.Callback<List<RssFeed>>(){
                    @Override
                    public void onSuccess(List<RssFeed> rssFeeds){
