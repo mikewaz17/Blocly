@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -28,24 +27,21 @@ import io.bloc.android.blocly.R;
 import io.bloc.android.blocly.api.DataSource;
 import io.bloc.android.blocly.api.model.RssFeed;
 import io.bloc.android.blocly.api.model.RssItem;
-import io.bloc.android.blocly.ui.adapter.ItemAdapter;
 import io.bloc.android.blocly.ui.adapter.NavigationDrawerAdapter;
+import io.bloc.android.blocly.ui.fragment.RssItemListFragment;
 
 public class BloclyActivity extends AppCompatActivity implements
         NavigationDrawerAdapter.NavigationDrawerAdapterDelegate,
-        ItemAdapter.DataSource,
-        ItemAdapter.Delegate, NavigationDrawerAdapter.NavigationDrawerAdapterDataSource {
-    private SwipeRefreshLayout swipeRefreshLayout;
-    private RecyclerView recyclerView;
-    //#47 BloclyActivity implements Delegate and DataSource for ItemAdapter
-    private ItemAdapter itemAdapter;
+        NavigationDrawerAdapter.NavigationDrawerAdapterDataSource,
+        RssItemListFragment.Delegate {
+
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
     private NavigationDrawerAdapter navigationDrawerAdapter;
     private Menu menu;
     private View overflowButton;
     private List<RssFeed> allFeeds = new ArrayList<RssFeed>();
-    private List<RssItem> currentItems = new ArrayList<RssItem>();
+    private RssItem expandedItem = null;
 
     //#46 added a menu object and another for the overflow button.
     //#55 Created the BroadcastReceiver which resets the data found in itemAdapter and navigationDrawerAdapter.
@@ -58,61 +54,7 @@ public class BloclyActivity extends AppCompatActivity implements
         setSupportActionBar(toolbar);
 
         //Assigning the ToolBar as our ActionBar
-        itemAdapter = new ItemAdapter();
-        itemAdapter.setDataSource(this);
-        itemAdapter.setDelegate(this);
-        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.srl_activity_blocly);
-        swipeRefreshLayout.setColorSchemeColors(getResources().getColor(R.color.primary));
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                // BloclyApplication.getSharedDataSource().fetchNewFeed("http://feeds.feedburner.com/androidcentral?format=xml",
-                BloclyApplication.getSharedDataSource().fetchNewFeed("http://feeds.ign.com/ign/all?format=xml",
-                //#57 Commented the line of code so it's easily changed back later if needed. Added the IGN feed.
-                        new DataSource.Callback<RssFeed>() {
-                            @Override
-                            public void onSuccess(RssFeed rssFeed) {
 
-                                if (isFinishing() || isDestroyed()) {
-                                    return;
-                                }
-                                allFeeds.add(rssFeed);
-                                navigationDrawerAdapter.notifyDataSetChanged();
-                                BloclyApplication.getSharedDataSource().fetchItemsForFeed(rssFeed,
-                                        new DataSource.Callback<List<RssItem>>() {
-                                            @Override
-                                            public void onSuccess(List<RssItem> rssItems) {
-
-                                                if (isFinishing() || isDestroyed()) {
-                                                    return;
-                                                }
-                                                currentItems.addAll(rssItems);
-                                                itemAdapter.notifyItemRangeInserted(0, currentItems.size());
-                                                swipeRefreshLayout.setRefreshing(false);
-                                            }
-
-                                            @Override
-                                            public void onError(String errorMessage) {
-
-                                                swipeRefreshLayout.setRefreshing(false);
-                                            }
-                                        });
-                            }
-
-                            @Override
-                            public void onError(String errorMessage) {
-                                Toast.makeText(BloclyActivity.this, errorMessage, Toast.LENGTH_LONG).show();
-                                swipeRefreshLayout.setRefreshing(false);
-                            }
-                        });
-            }
-        });
-
-        recyclerView = (RecyclerView) findViewById(R.id.rv_activity_blocly);
-        //#48 set the RecyclerView to our member variable
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(itemAdapter);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         drawerLayout = (DrawerLayout) findViewById(R.id.dl_activity_blocly);
         drawerToggle = new ActionBarDrawerToggle(this, drawerLayout, 0, 0) {
@@ -135,6 +77,7 @@ public class BloclyActivity extends AppCompatActivity implements
                     }
                 }
             }
+
             /*#46 when the drawer is open the items are dimmed and they go back to normal
              *once the drawer is closed. The menu can either be enabled or disabled and are clickable
              *when the drawer is open.
@@ -152,216 +95,185 @@ public class BloclyActivity extends AppCompatActivity implements
                 for (int i = 0; i < menu.size(); i++) {
                     menu.getItem(i).setEnabled(false);
                 }
+
+                @Override
+                public void onDrawerSlide (View drawerView,float slideOffset){
+                    super.onDrawerSlide(drawerView, slideOffset);
+                    if (overflowButton == null) {
+                        ArrayList<View> foundViews = new ArrayList<View>();
+                        getWindow().getDecorView().findViewsWithText(foundViews,
+                                getString(R.string.abc_action_menu_overflow_description),
+                                View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);
+                        if (foundViews.size() > 0) {
+                            overflowButton = foundViews.get(0);
+                        }
+                    }
+                    if (overflowButton != null) {
+                        overflowButton.setAlpha(1f - slideOffset);
+                    }
+                    if (menu == null) {
+                        return;
+                    }
+                    for (int i = 0; i < menu.size(); i++) {
+                        MenuItem item = menu.getItem(i);
+                        if (item.getItemId() == R.id.action_share
+                                && expandedItem == null) {
+                            continue;
+                        }
+                        Drawable icon = item.getIcon();
+                        if (icon != null) {
+                            icon.setAlpha((int) ((1f - slideOffset) * 255));
+                        }
+                    }
+                }
             }
 
-            @Override
-            public void onDrawerSlide(View drawerView, float slideOffset) {
-                super.onDrawerSlide(drawerView, slideOffset);
-                if (overflowButton == null) {
-                    ArrayList<View> foundViews = new ArrayList<View>();
-                    getWindow().getDecorView().findViewsWithText(foundViews,
-                            getString(R.string.abc_action_menu_overflow_description),
-                            View.FIND_VIEWS_WITH_CONTENT_DESCRIPTION);
-                    if (foundViews.size() > 0) {
-                        overflowButton = foundViews.get(0);
-                    }
-                }
-                if (overflowButton != null) {
-                    overflowButton.setAlpha(1f - slideOffset);
-                }
-                if (menu == null) {
-                    return;
-                }
-                for (int i = 0; i < menu.size(); i++) {
-                    MenuItem item = menu.getItem(i);
-                    if (item.getItemId() == R.id.action_share
-                            && itemAdapter.getExpandedItem() == null) {
-                        continue;
-                    }
-                    Drawable icon = item.getIcon();
-                    if (icon != null) {
-                        icon.setAlpha((int) ((1f - slideOffset) * 255));
-                    }
-                }
-            }
-        };
+            ;
         /*#46 If the drawer is opened then we don't use our XML menu, otherwise it's used as it
          *normally would. This class overrides the ActionBarDrawerToggle's default settings
          * The menu items are overflow button are enabled when the drawer is opened
          * The drawer layout ranges from 0f near the edge of the screen to 1f at the max width.
          * Searches the View and its children Views for matching text.
          */
-        drawerLayout.setDrawerListener(drawerToggle);
-        navigationDrawerAdapter = new NavigationDrawerAdapter();
-        navigationDrawerAdapter.setDelegate(this);
-        navigationDrawerAdapter.setDataSource(this);
-        RecyclerView navigationRecyclerView = (RecyclerView) findViewById(R.id.rv_nav_activity_blocly);
-        navigationRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        navigationRecyclerView.setItemAnimator(new DefaultItemAnimator());
-        navigationRecyclerView.setAdapter(navigationDrawerAdapter);
+            drawerLayout.setDrawerListener(drawerToggle);navigationDrawerAdapter=
 
-        //#55 Registered the BroadcastReceiver so it can receive the broadcasts.
-    }
-    //#45 BloclyActivity implements the NavigationDrawerAdapterDelegate and sets it as such.
+            newNavigationDrawerAdapter();
 
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        drawerToggle.syncState();
-    }
+            navigationDrawerAdapter.setDelegate(this);
+            navigationDrawerAdapter.setDataSource(this);
+            RecyclerView navigationRecyclerView = (RecyclerView) findViewById(R.id.rv_nav_activity_blocly);
+            navigationRecyclerView.setLayoutManager(newLinearLayoutManager(this));
+            navigationRecyclerView.setItemAnimator(newDefaultItemAnimator());
+            navigationRecyclerView.setAdapter(navigationDrawerAdapter);
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        drawerToggle.onConfigurationChanged(newConfig);
-    }
+            BloclyApplication.getSharedDataSource().
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.blocly, menu);
-        this.menu = menu;
-        animateShareItem(itemAdapter.getExpandedItem() != null);
-        return super.onCreateOptionsMenu(menu);
-    }
+            fetchAllFeeds(new DataSource.Callback<List<RssFeed>>() {
+                @Override
+                public void onSuccess (List < RssFeed > rssFeeds) {
+                    allFeeds.addAll(rssFeeds);
+                    navigationDrawerAdapter.notifyDataSetChanged();
+                    getFragmentManager()
+                            .beginTransaction()
+                            .add(R.id.fl_activity_blocly, RssItemListFragment.fragmentForRssFeed(rssFeeds.get(0)))
+                            .commit();
+                }
 
-    // #46 removed the drawer checker and brought in a the menu object.
-    // #49 animate the Item when its created
+                @Override
+                public void onError(String errorMessage){}
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+            });
         }
-        if (drawerToggle.onOptionsItemSelected(item)) {
-            return true;
+
+        @Override
+        protected void onPostCreate (Bundle savedInstanceState){
+            super.onPostCreate(savedInstanceState);
+            drawerToggle.syncState();
         }
-        if (item.getItemId() == R.id.action_share) {
-            RssItem itemToShare = itemAdapter.getExpandedItem();
-            if (itemToShare == null) {
-                return false;
+
+        @Override
+        public void onConfigurationChanged (Configuration newConfig){
+            super.onConfigurationChanged(newConfig);
+            drawerToggle.onConfigurationChanged(newConfig);
+        }
+
+        @Override
+        public boolean onCreateOptionsMenu (Menu menu){
+            // Inflate the menu; this adds items to the action bar if it is present.
+            getMenuInflater().inflate(R.menu.blocly, menu);
+            this.menu = menu;
+            animateShareItem(expandedItem != null);
+            return super.onCreateOptionsMenu(menu);
+        }
+
+        // #46 removed the drawer checker and brought in a the menu object.
+        // #49 animate the Item when its created
+
+        @Override
+        public boolean onOptionsItemSelected (MenuItem item){
+            // Handle action bar item clicks here. The action bar will
+            // automatically handle clicks on the Home/Up button, so long
+            // as you specify a parent activity in AndroidManifest.xml.
+            int id = item.getItemId();
+            //noinspection SimplifiableIfStatement
+            if (id == R.id.action_settings) {
+                return true;
             }
-            Intent shareIntent = new Intent(Intent.ACTION_SEND);
-            shareIntent.putExtra(Intent.EXTRA_TEXT,
-                    String.format("%s (%s)", itemToShare.getTitle(), itemToShare.getUrl()));
-            shareIntent.setType("text/plain");
-            Intent chooser = Intent.createChooser(shareIntent, getString(R.string.share_chooser_title));
-            startActivity(chooser);
-        } else {
-            Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
-        }
+            if (drawerToggle.onOptionsItemSelected(item)) {
+                return true;
+            }
+            if (item.getItemId() == R.id.action_share) {
+                RssItem itemToShare = expandedItem;
+                if (itemToShare == null) {
+                    return false;
+                }
+                Intent shareIntent = new Intent(Intent.ACTION_SEND);
+                shareIntent.putExtra(Intent.EXTRA_TEXT,
+                        String.format("%s (%s)", itemToShare.getTitle(), itemToShare.getUrl()));
+                shareIntent.setType("text/plain");
+                Intent chooser = Intent.createChooser(shareIntent, getString(R.string.share_chooser_title));
+                startActivity(chooser);
+            } else {
+                Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
+            }
         /* #49 Intent was created with an action String, passed info to the receiving Activity with putExtra(String,string)
          * Set the Intents type with text/plain. a new Activity called chooser was created and start the Activity with the
          * startActivity method.
          */
 
-        return super.onOptionsItemSelected(item);
-    }
+            return super.onOptionsItemSelected(item);
+        }
 
     /*
      * NavigationDrawerAdapterDelegate
      */
 
-    @Override
-    public void didSelectNavigationOption(NavigationDrawerAdapter adapter, NavigationDrawerAdapter.NavigationOption navigationOption) {
-        drawerLayout.closeDrawers();
-        Toast.makeText(this, "Show the " + navigationOption.name(), Toast.LENGTH_SHORT).show();
-    }
+        @Override
+        public void didSelectNavigationOption (NavigationDrawerAdapter
+        adapter, NavigationDrawerAdapter.NavigationOption navigationOption){
+            drawerLayout.closeDrawers();
+            Toast.makeText(this, "Show the " + navigationOption.name(), Toast.LENGTH_SHORT).show();
+        }
 
-    @Override
-    public void didSelectFeed(NavigationDrawerAdapter adapter, RssFeed rssFeed) {
-        drawerLayout.closeDrawers();
-        Toast.makeText(this, "Show RSS items from " + rssFeed.getTitle(), Toast.LENGTH_SHORT).show();
-    }
-
+        @Override
+        public void didSelectFeed (NavigationDrawerAdapter adapter, RssFeed rssFeed){
+            drawerLayout.closeDrawers();
+            Toast.makeText(this, "Show RSS items from " + rssFeed.getTitle(), Toast.LENGTH_SHORT).show();
+        }
         /*
-      * NavigationDrawerAdapterDataSource
-      */
+         * NavigationDrawerAdapterDataSource
+         */
 
-    @Override
-    public List<RssFeed> getFeeds(NavigationDrawerAdapter adapter) {
-        return allFeeds;
-    }
-     /*
-      * ItemAdapter.DataSource
-      */
+        @Override
+        public List<RssFeed> getFeeds (NavigationDrawerAdapter adapter){
+            return allFeeds;
+        }
+       /*
+        *  RssListFragment.Delegate
+        */
 
-    @Override
-    public RssItem getRssItem(ItemAdapter itemAdapter, int position) {
-        return currentItems.get(position);
-    }
-
-    @Override
-    public RssFeed getRssFeed(ItemAdapter itemAdapter, int position) {
-        RssItem rssItem = currentItems.get(position);
-        for (RssFeed feed : allFeeds) {
-            if (rssItem.getRssFeedId() == feed.getRowId()) {
-                return feed;
+        @Override
+        public void onItemExpanded (RssItemListFragment rssItemListFragment, RssItem rssItem){
+            expandedItem = rssItem;
+            animateShareItem(expandedItem != null);
+        }
+        @Override
+        public void onItemContracted (RssItemListFragment rssItemListFragment, RssItem rssItem){
+            if (expandedItem == rssItem) {
+                expandedItem = null;
             }
+            animateShareItem(expandedItem != null);
         }
-        return null;
-    }
-
-    @Override
-    public int getItemCount(ItemAdapter itemAdapter) {
-        return currentItems.size();
-    }
-
-     /*
-      * ItemAdapter.Delegate
-      */
-    //#47 setting BloclyActivity as ItemAdapter's delegate and data source It shows all items found in DataSource class.
-    @Override
-    public void onItemClicked(ItemAdapter itemAdapter, RssItem rssItem) {
-        int positionToExpand = -1;
-        int positionToContract = -1;
-        if (itemAdapter.getExpandedItem() != null) {
-            positionToContract = currentItems.indexOf(itemAdapter.getExpandedItem());
-            View viewToContract = recyclerView.getLayoutManager().findViewByPosition(positionToContract);
-            if (viewToContract == null) {
-                positionToContract = -1;
-            }
+        @Override
+        public void onItemVisitClicked (RssItemListFragment rssItemListFragment, RssItem rssItem){
+            Intent visitIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(rssItem.getUrl()));
+            startActivity(visitIntent);
         }
-        //#48 finding the View that is contracting
-
-        if (itemAdapter.getExpandedItem() != rssItem) {
-            positionToExpand = currentItems.indexOf(rssItem);
-            itemAdapter.setExpandedItem(rssItem);
-        } else {
-            itemAdapter.setExpandedItem(null);
-        }
-        if (positionToContract > -1) {
-            itemAdapter.notifyItemChanged(positionToContract);
-        }
-        if (positionToExpand > -1) {
-            itemAdapter.notifyItemChanged(positionToExpand);
-            animateShareItem(true);
-        } else {
-            animateShareItem(false);
-            return;
-            // #49 animate the shareItem when the item expands, if not keep it hidden.
-        }
-        int lessToScroll = 0;
-        if (positionToContract > -1 && positionToContract < positionToExpand) {
-            lessToScroll = itemAdapter.getExpandedItemHeight() - itemAdapter.getCollapsedItemHeight();
-        }
-        View viewToExpand = recyclerView.getLayoutManager().findViewByPosition(positionToExpand);
-        recyclerView.smoothScrollBy(0, viewToExpand.getTop() - lessToScroll);
-    }
-    @Override
-    public void onVisitClicked(ItemAdapter itemAdapter, RssItem rssItem) {
-        Intent visitIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(rssItem.getUrl()));
-        startActivity(visitIntent);
     }
      /*
       * Private methods
       */
-    // #49 set the Intent's Uniform Resource Identifier(specify the location of a resource) to the RssItem's URL
+        // #49 set the Intent's Uniform Resource Identifier(specify the location of a resource) to the RssItem's URL
 
     private void animateShareItem(final boolean enabled) {
         MenuItem shareItem = menu.findItem(R.id.action_share);
@@ -384,6 +296,7 @@ public class BloclyActivity extends AppCompatActivity implements
     }
     //#45 when the user clicks on the RssItem or the NavigationOption the corresponding text will appear.
 }
+
     // #47 This helps determine which items the ItemAdapter displays from the users selection.
     /* #48 Avoid scrolling the RecyclerView when there's no View to expand from. We find the position
      * of the LayoutManager by invoking findViewByPosition(int). If finds the View and returns it if it's

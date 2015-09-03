@@ -58,7 +58,12 @@ public class RssFeedTable extends Table {
         return readonlyDatabase.query(true, NAME, null, COLUMN_FEED_URL + " = ?", new String[]{feedURL},
                 null, null, null, null);
     }
-    //#55 Added in the four methods SiteURL, FeedURL, Title, Description.//
+
+    public static Cursor fetchAllFeeds(SQLiteDatabase readonlyDatabase) {
+        return readonlyDatabase.rawQuery("SELECT * FROM " + NAME + " ORDER BY ?", new String[]{COLUMN_TITLE});
+    }
+    //#55 Added in the four methods SiteURL, FeedURL, Title, Description.
+    //#58 The query returns all columns for each entry into rss_feeds.
 
 
     private static final String NAME = "rss_feeds";
