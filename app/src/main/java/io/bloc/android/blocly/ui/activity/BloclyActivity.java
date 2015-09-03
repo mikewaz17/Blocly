@@ -33,7 +33,7 @@ import io.bloc.android.blocly.ui.fragment.RssItemListFragment;
 public class BloclyActivity extends AppCompatActivity implements
         NavigationDrawerAdapter.NavigationDrawerAdapterDelegate,
         NavigationDrawerAdapter.NavigationDrawerAdapterDataSource,
-        RssItemListFragment.Delegate {
+        RssItemListFragment.Delegate{
 
     private ActionBarDrawerToggle drawerToggle;
     private DrawerLayout drawerLayout;
@@ -95,7 +95,7 @@ public class BloclyActivity extends AppCompatActivity implements
                 for (int i = 0; i < menu.size(); i++) {
                     menu.getItem(i).setEnabled(false);
                 }
-
+            }
                 @Override
                 public void onDrawerSlide (View drawerView,float slideOffset){
                     super.onDrawerSlide(drawerView, slideOffset);
@@ -126,44 +126,43 @@ public class BloclyActivity extends AppCompatActivity implements
                         }
                     }
                 }
-            }
+            };
 
-            ;
+
         /*#46 If the drawer is opened then we don't use our XML menu, otherwise it's used as it
          *normally would. This class overrides the ActionBarDrawerToggle's default settings
          * The menu items are overflow button are enabled when the drawer is opened
          * The drawer layout ranges from 0f near the edge of the screen to 1f at the max width.
          * Searches the View and its children Views for matching text.
          */
-            drawerLayout.setDrawerListener(drawerToggle);navigationDrawerAdapter=
+        drawerLayout.setDrawerListener(drawerToggle);
+        navigationDrawerAdapter = new NavigationDrawerAdapter();
+        navigationDrawerAdapter.setDelegate(this);
+        navigationDrawerAdapter.setDataSource(this);
+        RecyclerView navigationRecyclerView = (RecyclerView)findViewById(R.id.rv_activity_blocly);
+        navigationRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        navigationRecyclerView.setItemAnimator(new DefaultItemAnimator());
+        navigationRecyclerView.setAdapter(navigationDrawerAdapter);
 
-            newNavigationDrawerAdapter();
+        BloclyActivity.getSharedDataSource().
+                fetchAllFeeds(new DataSource.Callback<List<RssFeed>>(){
+                   @Override
+                   public void onSuccess(List<RssFeed> rssFeeds){
+                       allFeeds.addAll(rssFeeds);
+                       navigationDrawerAdapter.notifyDataSetChanged();
+                       getFragmentManager()
+                               .beginTransaction()
+                               .add(R.id.fl_activity_blocly, RssItemListFragment.fragmentForRssFeed(rssFeeds.get(0)))
+                               .commit();
+                   }
 
-            navigationDrawerAdapter.setDelegate(this);
-            navigationDrawerAdapter.setDataSource(this);
-            RecyclerView navigationRecyclerView = (RecyclerView) findViewById(R.id.rv_nav_activity_blocly);
-            navigationRecyclerView.setLayoutManager(newLinearLayoutManager(this));
-            navigationRecyclerView.setItemAnimator(newDefaultItemAnimator());
-            navigationRecyclerView.setAdapter(navigationDrawerAdapter);
-
-            BloclyApplication.getSharedDataSource().
-
-            fetchAllFeeds(new DataSource.Callback<List<RssFeed>>() {
                 @Override
-                public void onSuccess (List < RssFeed > rssFeeds) {
-                    allFeeds.addAll(rssFeeds);
-                    navigationDrawerAdapter.notifyDataSetChanged();
-                    getFragmentManager()
-                            .beginTransaction()
-                            .add(R.id.fl_activity_blocly, RssItemListFragment.fragmentForRssFeed(rssFeeds.get(0)))
-                            .commit();
+                public void onError (String errorMessage){
                 }
 
-                @Override
-                public void onError(String errorMessage){}
-
-            });
+                });
         }
+
 
         @Override
         protected void onPostCreate (Bundle savedInstanceState){
@@ -269,11 +268,11 @@ public class BloclyActivity extends AppCompatActivity implements
             Intent visitIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(rssItem.getUrl()));
             startActivity(visitIntent);
         }
-    }
+
      /*
       * Private methods
       */
-        // #49 set the Intent's Uniform Resource Identifier(specify the location of a resource) to the RssItem's URL
+    // #49 set the Intent's Uniform Resource Identifier(specify the location of a resource) to the RssItem's URL
 
     private void animateShareItem(final boolean enabled) {
         MenuItem shareItem = menu.findItem(R.id.action_share);
